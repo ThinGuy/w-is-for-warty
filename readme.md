@@ -121,3 +121,15 @@ Released under a non-commercial BSD license
 * * *
 
 [turnjs.com](http://www.turnjs.com/)
+
+### Custom demo: workshop shelf coffee-table books
+
+A ready-to-customize landscape flipbook demo is available at:
+
+- `demos/bookshelf/index.html`
+
+It includes:
+
+- Wide coffee-table dimensions tuned for `display: 'double'`
+- Shelf-style book selection for multiple titles
+- Cover + dust-jacket styling and keyboard/arrow controls

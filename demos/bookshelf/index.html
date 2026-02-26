@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Workshop Shelf Flip Books</title>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script src="../../turn.min.js"></script>
+	<style>
+		:root {
+			--paper: #f6efe2;
+			--ink: #2a2622;
+			--wood-dark: #342519;
+			--wood-light: #6f4d34;
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			margin: 0;
+			font-family: "Trebuchet MS", system-ui, sans-serif;
+			color: #f4f1eb;
+			background: radial-gradient(circle at 20% 20%, #404450 0, #1d1f28 45%, #101217 100%);
+			min-height: 100vh;
+		}
+
+		.workspace {
+			max-width: 1800px;
+			margin: 0 auto;
+			padding: 24px 20px 40px;
+		}
+
+		h1 {
+			margin: 0 0 6px;
+			font-size: clamp(1.4rem, 2.1vw, 2rem);
+			letter-spacing: .03em;
+		}
+
+		.subtitle {
+			margin: 0 0 18px;
+			opacity: .8;
+		}
+
+		.shelf {
+			position: relative;
+			display: flex;
+			align-items: end;
+			gap: 16px;
+			overflow-x: auto;
+			padding: 16px 14px 8px;
+			background: linear-gradient(180deg, #30251f, #251710 62%, #180f0a);
+			border: 1px solid #5c4636;
+			border-radius: 12px;
+			box-shadow: inset 0 1px 0 #88684d, inset 0 -14px 24px rgb(0 0 0 / .35);
+		}
+
+		.shelf::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: -9px;
+			height: 10px;
+			background: linear-gradient(180deg, #120a06, transparent);
+			border-radius: 0 0 12px 12px;
+		}
+
+		.book-spine {
+			position: relative;
+			min-width: 82px;
+			height: 210px;
+			border: 0;
+			cursor: pointer;
+			border-radius: 6px 12px 12px 6px;
+			padding: 0;
+			color: #fff;
+			text-align: left;
+			box-shadow: 4px 0 8px rgb(0 0 0 / .35);
+			background: linear-gradient(90deg, rgb(255 255 255 / .12), transparent 14%),
+						linear-gradient(180deg, #734f39, #452b1d);
+		}
+
+		.book-spine.active {
+			outline: 2px solid #f8d58a;
+			outline-offset: 2px;
+			transform: translateY(-4px);
+		}
+
+		.book-spine .label {
+			position: absolute;
+			left: 50%;
+			top: 12px;
+			transform: translateX(-50%);
+			writing-mode: vertical-rl;
+			text-orientation: mixed;
+			font-weight: 700;
+			font-size: 14px;
+			letter-spacing: .08em;
+			text-transform: uppercase;
+		}
+
+		.viewer-wrap {
+			position: relative;
+			margin-top: 18px;
+			padding: 16px;
+			border-radius: 14px;
+			background: linear-gradient(180deg, #171b25, #0f1219);
+			border: 1px solid #3a4256;
+			box-shadow: 0 12px 28px rgb(0 0 0 / .35);
+		}
+
+		#book {
+			width: min(96vw, 1600px);
+			height: min(70vw, 700px);
+			max-width: 1600px;
+			max-height: 700px;
+			margin: 0 auto;
+		}
+
+		#book .turn-page {
+			background: var(--paper);
+			background-image:
+				linear-gradient(90deg, rgb(0 0 0 / .04), transparent 7%),
+				linear-gradient(180deg, rgb(255 255 255 / .65), rgb(0 0 0 / .02));
+			color: var(--ink);
+		}
+
+		.page {
+			height: 100%;
+			padding: clamp(14px, 1.8vw, 30px);
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+
+		.cover {
+			color: #fff;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.cover::before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(140deg, rgb(255 255 255 / .28), transparent 35%);
+			mix-blend-mode: screen;
+		}
+
+		.front-cover {
+			background: radial-gradient(circle at 25% 20%, #88b4ff, #2e4f92 43%, #1b3057 90%);
+		}
+
+		.back-cover {
+			background: radial-gradient(circle at 80% 20%, #5c4632, #2f2318 55%, #1f170f 100%);
+		}
+
+		.dust-jacket {
+			position: absolute;
+			inset: 12px;
+			border: 1px solid rgb(255 255 255 / .35);
+			padding: 20px;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			background: linear-gradient(180deg, rgb(255 255 255 / .05), rgb(0 0 0 / .2));
+		}
+
+		.dust-jacket h2 {
+			margin: 0;
+			font-size: clamp(1.3rem, 2.4vw, 2.5rem);
+			letter-spacing: .04em;
+		}
+
+		.dust-jacket p {
+			max-width: 30ch;
+			line-height: 1.4;
+			margin: 0;
+		}
+
+		.page h3 { margin: 0 0 12px; font-size: clamp(1rem, 1.9vw, 1.8rem); }
+		.page p { line-height: 1.45; margin: 0; }
+
+		.photo {
+			height: 72%;
+			border-radius: 8px;
+			border: 1px solid rgb(0 0 0 / .18);
+			background-size: cover;
+			background-position: center;
+			box-shadow: inset 0 0 0 1px rgb(255 255 255 / .2);
+		}
+
+		.controls {
+			display: flex;
+			gap: 10px;
+			justify-content: center;
+			margin-top: 14px;
+		}
+
+		.controls button {
+			padding: 10px 16px;
+			border-radius: 8px;
+			border: 1px solid #647091;
+			background: #232a3a;
+			color: #ecf0ff;
+			font-weight: 600;
+			cursor: pointer;
+		}
+
+		@media (max-width: 980px) {
+			#book { height: min(72vw, 560px); }
+			.book-spine { height: 170px; min-width: 70px; }
+		}
+	</style>
+</head>
+<body>
+	<div class="workspace">
+		<h1>Workbench Shelf · Flip Book Library</h1>
+		<p class="subtitle">Pick a book from the shelf, then flip pages with your mouse, touch, or arrow keys.</p>
+
+		<div class="shelf" id="shelf"></div>
+
+		<div class="viewer-wrap">
+			<div id="book" aria-label="Flip book viewer"></div>
+			<div class="controls">
+				<button id="prev" type="button">◀ Previous</button>
+				<button id="next" type="button">Next ▶</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const books = [
+			{
+				id: 'ubuntu-for-kids',
+				spine: 'Ubuntu for Kids',
+				title: 'Ubuntu for Kids',
+				subtitle: 'A colorful intro to Linux adventures',
+				coverTheme: 'front-cover',
+				pages: [
+					{ heading: 'Welcome to the Desk', text: 'The book starts at your workshop desk where every icon is a toy and every command is a superpower.', color: 'linear-gradient(145deg,#f2db8d,#d7a43c)' },
+					{ heading: 'Build a Learning Corner', text: 'Arrange shelves, labels, and shortcuts so a young Ubuntu nerd can always find the next experiment.', color: 'linear-gradient(145deg,#83d6ff,#4a79ea)' },
+					{ heading: 'Terminal Treasure Hunt', text: 'Mini challenges make the terminal feel like a game: find files, decode clues, and script tiny wins.', color: 'linear-gradient(145deg,#96f5c8,#36ab75)' },
+					{ heading: 'Creative Projects', text: 'From sticker sheets to shell aliases, every project links a visual goal with practical Linux skills.', color: 'linear-gradient(145deg,#f8adc4,#d55b95)' }
+				]
+			},
+			{
+				id: 'ubuntu-nerd-jr',
+				spine: 'Ubuntu Nerd Jr',
+				title: 'Ubuntu Nerd Jr.',
+				subtitle: 'Coffee-table stories from your maker shelf',
+				coverTheme: 'back-cover',
+				pages: [
+					{ heading: 'Shelf Stories', text: 'A wide landscape spread captures your workspace exactly as visitors see it: tools, notes, and books.', color: 'linear-gradient(145deg,#baadff,#6551b7)' },
+					{ heading: 'CLI Recipes', text: 'Each chapter pairs one practical command with a playful illustration and a real world maker task.', color: 'linear-gradient(145deg,#9ce6ff,#477c99)' },
+					{ heading: 'Homelab Saturday', text: 'Networking, backups, and containers are explained like weekend projects with measurable outcomes.', color: 'linear-gradient(145deg,#ffd88b,#af6e2e)' },
+					{ heading: 'Share and Teach', text: 'The final spreads invite readers to publish what they build and mentor the next curious kid.', color: 'linear-gradient(145deg,#f8a6a6,#b95f5f)' }
+				]
+			}
+		];
+
+		function buildShelf() {
+			const shelf = $('#shelf');
+			books.forEach((book, idx) => {
+				const btn = $(
+					`<button type="button" class="book-spine ${idx === 0 ? 'active' : ''}" data-book="${book.id}">
+						<span class="label">${book.spine}</span>
+					</button>`
+				);
+				shelf.append(btn);
+			});
+		}
+
+		function pageTemplate(page) {
+			return `
+				<div class="page">
+					<div class="photo" style="background:${page.color}"></div>
+					<div>
+						<h3>${page.heading}</h3>
+						<p>${page.text}</p>
+					</div>
+				</div>
+			`;
+		}
+
+		function coverTemplate(book) {
+			return `
+				<div class="page cover ${book.coverTheme}">
+					<div class="dust-jacket">
+						<h2>${book.title}</h2>
+						<p>${book.subtitle}</p>
+					</div>
+				</div>
+			`;
+		}
+
+		function renderBook(bookId) {
+			const book = books.find((b) => b.id === bookId) || books[0];
+			const container = $('#book');
+
+			if (container.data('initialized')) {
+				container.turn('destroy').html('');
+			}
+
+			container.append(coverTemplate(book));
+			book.pages.forEach((page) => container.append(pageTemplate(page)));
+			container.append(`
+				<div class="page cover back-cover">
+					<div class="dust-jacket">
+						<h2>Thanks for Reading</h2>
+						<p>${book.title} · printed for the workshop shelf</p>
+					</div>
+				</div>
+			`);
+
+			container.turn({
+				width: Math.min(window.innerWidth * 0.96, 1600),
+				height: Math.min(window.innerWidth * 0.42, 700),
+				display: 'double',
+				autoCenter: true,
+				gradients: true,
+				elevation: 80,
+				acceleration: true
+			});
+			container.data('initialized', true);
+		}
+
+		function resizeBook() {
+			const container = $('#book');
+			if (!container.data('initialized')) return;
+			container.turn('size', Math.min(window.innerWidth * 0.96, 1600), Math.min(window.innerWidth * 0.42, 700));
+		}
+
+		$(function() {
+			buildShelf();
+			renderBook(books[0].id);
+
+			$('#shelf').on('click', '.book-spine', function() {
+				$('.book-spine').removeClass('active');
+				$(this).addClass('active');
+				renderBook($(this).data('book'));
+			});
+
+			$('#prev').on('click', () => $('#book').turn('previous'));
+			$('#next').on('click', () => $('#book').turn('next'));
+
+			$(window).on('keydown', (e) => {
+				if (e.keyCode === 37) $('#book').turn('previous');
+				if (e.keyCode === 39) $('#book').turn('next');
+			});
+
+			$(window).on('resize', resizeBook);
+		});
+	</script>
+</body>
+</html>
