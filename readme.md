@@ -1,7 +1,9 @@
 
-![Bilby Stampede](http://turnjs.com/pics/small-turnjs-letters.png)
+![Bilby Stampede](https://turnjs.com/pics/small-turnjs-letters.png)
 
-**Get the turn.js 4th release on [turnjs.com](http://www.turnjs.com/)**
+**Get the turn.js 4th release on [turnjs.com](https://www.turnjs.com/)**
+
+Source repository: [github.com/blasten/turn.js](https://github.com/blasten/turn.js)
 
 
 ### What's new in turn.js 4th release?
@@ -60,7 +62,7 @@
 
 - Fixed issue about appending pages in wrong locations
 
-Available only on [turnjs.com](http://www.turnjs.com/)
+Available only on [turnjs.com](https://www.turnjs.com/)
 
 * * *
 
@@ -120,4 +122,4 @@ Released under a non-commercial BSD license
 
 * * *
 
-[turnjs.com](http://www.turnjs.com/)
+[turnjs.com](https://www.turnjs.com/)
